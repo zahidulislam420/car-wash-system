@@ -1,0 +1,132 @@
+
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
+import { useState } from "react";
+import { CarFront, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { signUp } from "@/lib/auth-client";
+
+const SignupPage = () => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setLoading(true);
+    setErrorMessage("");
+
+    const formData = new FormData(event.currentTarget);
+
+    const user = {
+      name: String(formData.get("name")).trim(),
+      email: String(formData.get("email")).trim().toLowerCase(),
+      password: String(formData.get("password")),
+    };
+
+    try {
+      console.log("[CarCare] Sign-up data:", user);
+
+      const { data, error } = await signUp.email({
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        callbackURL: "/",
+      });
+      if (error) return setError(error.message ?? "Could not create your account")
+        toast.error(error.message ?? "Could not create your account");
+
+      console.log("[CarCare] Sign-up response:", data, error);
+
+      if (error) {
+        setErrorMessage(error.message || "Something went wrong!");
+        return;
+      }
+
+      router.push("/signin?created=1");
+      router.refresh();
+
+    } catch (error) {
+      console.error("[CarCare] Sign-up error:", error);
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="mx-auto w-full max-w-md rounded-3xl border border-white/80 bg-white/90 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur sm:p-9">
+      <Link href="/" className="mb-8 flex w-fit items-center gap-2 text-[#1d376f]">
+        <span className="grid size-10 place-items-center rounded-xl bg-[#1d376f]">
+          <CarFront className="size-5 fill-[#ffb800] text-[#ffb800]" />
+        </span>
+        <span className="text-lg font-bold tracking-tight">CarCare</span>
+      </Link>
+
+      <div className="mb-7">
+        <p className="mb-2 text-sm font-semibold text-[#e8a800]">GET STARTED</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Create your account</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Book a wash in moments and keep your service history in one place.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-700">Full name</span>
+          <span className="flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-[#1d376f] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1d376f]/10">
+            <UserRound className="size-4 text-slate-400" />
+            <input className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400" type="text" name="name" placeholder="Your full name" autoComplete="name" required />
+          </span>
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-700">Email address</span>
+          <span className="flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-[#1d376f] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1d376f]/10">
+            <Mail className="size-4 text-slate-400" />
+            <input className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400" type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
+          </span>
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
+          <span className="flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-[#1d376f] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1d376f]/10">
+            <LockKeyhole className="size-4 text-slate-400" />
+            <input className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400" type="password" name="password" placeholder="Create a password" autoComplete="new-password" required minLength={8} />
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-2 pt-1 text-sm leading-5 text-slate-600">
+          <input type="checkbox" name="terms" className="mt-0.5 size-4 shrink-0 rounded border-slate-300 accent-[#1d376f]" required />
+          <span>
+            I agree to the <button type="button" className="font-semibold text-[#1d376f] hover:underline">Terms of Service</button> and <button type="button" className="font-semibold text-[#1d376f] hover:underline">Privacy Policy</button>.
+          </span>
+        </label>
+
+        {errorMessage && (
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="h-12 w-full rounded-xl bg-[#1d376f] text-sm font-semibold text-white shadow-lg shadow-[#1d376f]/20 transition hover:bg-[#162d5d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d376f] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Creating account..." : "Create account"}
+        </button>
+      </form>
+
+      <p className="mt-7 text-center text-sm text-slate-600">
+        Already have an account?{" "}
+        <Link href="/signin" className="font-semibold text-[#1d376f] hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </section>
+  );
+};
+
+export default SignupPage;
