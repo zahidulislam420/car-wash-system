@@ -8,8 +8,9 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
         <div className="min-h-screen bg-white">
             <Header />
             <Navbar />
-            {children}
             <Toaster />
+            {children}
+            
         </div>
     );
 };

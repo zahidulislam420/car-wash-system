@@ -3,33 +3,46 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FormEvent } from "react";
+import { useState } from "react";
 import { CarFront, LockKeyhole, Mail } from "lucide-react";
-import { createDemoSession, getDemoUser } from "@/lib/demo-auth";
+import { signIn } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 const SigninPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const created = searchParams.get("created") === "1";
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email")).trim().toLowerCase();
     const password = String(formData.get("password"));
-    const credentials = { email, password };
+    setLoading(true);
+    setErrorMessage("");
 
-    console.log("[CarCare] Sign-in data:", credentials);
-    const user = getDemoUser();
+    try {
+      const { error } = await signIn.email({ email, password, callbackURL: "/" });
 
-    if (!user || user.email !== email || user.password !== password) {
-      console.log("[CarCare] Sign-in failed: no matching demo account");
-      window.alert("No matching demo account found. Please sign up first.");
-      return;
+      if (error) {
+        const message = error.message || "Email or password is incorrect.";
+        setErrorMessage(message);
+        toast.add({ title: "Sign in failed", description: message, type: "error" });
+        return;
+      }
+
+      toast.add({ title: "Signed in successfully", description: "Welcome back!", type: "success" });
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not sign in. Please try again.";
+      setErrorMessage(message);
+      toast.add({ title: "Sign in failed", description: message, type: "error" });
+    } finally {
+      setLoading(false);
     }
-
-    createDemoSession(user.email);
-    console.log("[CarCare] Login successful:", { name: user.name, email: user.email });
-    router.push("/");
   };
 
   return (
@@ -46,6 +59,7 @@ const SigninPage = () => {
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Sign in to your account</h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">Manage your bookings and keep your vehicle looking its best.</p>
         {created && <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">Account created. Sign in to continue.</p>}
+        {errorMessage && <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{errorMessage}</p>}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -73,8 +87,8 @@ const SigninPage = () => {
           <button type="button" className="font-semibold text-[#1d376f] hover:underline">Forgot password?</button>
         </div>
 
-        <button type="submit" className="h-12 w-full rounded-xl bg-[#1d376f] text-sm font-semibold text-white shadow-lg shadow-[#1d376f]/20 transition hover:bg-[#162d5d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d376f]">
-          Sign in
+        <button type="submit" disabled={loading} className="h-12 w-full rounded-xl bg-[#1d376f] text-sm font-semibold text-white shadow-lg shadow-[#1d376f]/20 transition hover:bg-[#162d5d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d376f] disabled:cursor-not-allowed disabled:opacity-60">
+          {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>
 

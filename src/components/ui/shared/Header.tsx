@@ -1,7 +1,29 @@
+"use client";
+
 import Link from "next/link";
-import { CarFront, MessageCircle, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CarFront, ChevronDown, LayoutDashboard, LogOut, MessageCircle, UserRound } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { signOut, useSession } from "@/lib/auth-client";
 
 const Header = () => {
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/signin");
+    router.refresh();
+  };
+
   return (
     <header className="bg-[#1d376f] text-white">
       <div className="mx-auto flex h-16 max-w-[1150px] items-center justify-between px-5 sm:px-8 lg:px-0">
@@ -28,13 +50,47 @@ const Header = () => {
           >
             <MessageCircle className="size-4" strokeWidth={1.8} />
           </a>
-          <Link
-            href="/account"
-            aria-label="Your account"
-            className="transition-opacity hover:opacity-80"
-          >
-            <UserRound className="size-4" strokeWidth={1.8} />
-          </Link>
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex h-9 items-center gap-2 rounded-full px-2 transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                <span className="grid size-7 place-items-center rounded-full bg-white/15">
+                  <UserRound className="size-4" strokeWidth={1.8} />
+                </span>
+                <span className="hidden max-w-32 truncate sm:block">{session.user.name}</span>
+                <ChevronDown className="hidden size-3.5 sm:block" />
+                <span className="sr-only">Open account menu</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="truncate">{session.user.email}</DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+                  <LayoutDashboard />
+                  Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  <UserRound />
+                  My Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+                  <LogOut />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : !isPending ? (
+            <Link
+              href="/signin"
+              aria-label="Sign in"
+              className="transition-opacity hover:opacity-80"
+            >
+              <UserRound className="size-4" strokeWidth={1.8} />
+            </Link>
+          ) : (
+            <span aria-hidden="true" className="size-4" />
+          )}
         </div>
       </div>
     </header>

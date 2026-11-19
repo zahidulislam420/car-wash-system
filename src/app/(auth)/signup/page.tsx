@@ -7,6 +7,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { CarFront, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 const SignupPage = () => {
   const router = useRouter();
@@ -36,8 +37,6 @@ const SignupPage = () => {
         password: user.password,
         callbackURL: "/",
       });
-      if (error) return setError(error.message ?? "Could not create your account")
-        toast.error(error.message ?? "Could not create your account");
 
       console.log("[CarCare] Sign-up response:", data, error);
 
@@ -46,6 +45,11 @@ const SignupPage = () => {
         return;
       }
 
+      toast.add({
+        title: "Account created successfully",
+        description: "You can now sign in with your new account.",
+        type: "success",
+      });
       router.push("/signin?created=1");
       router.refresh();
 
